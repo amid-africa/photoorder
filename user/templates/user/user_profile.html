@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load staticfiles bootstrap4 %}
+
+{% block title %}User Profile{% endblock %}
+
+{% block content %}
+    <div id="content-container" class="container p-none">
+        <div class="lgn-container col-lg-8">
+          <h2>{{ user.name }}</h2>
+          {% bootstrap_messages %}
+          <table class="table">
+            <tbody>
+              <tr>
+                <td>Name</td>
+                <td>{{ user.name }}</td>
+                <td>{% if user.is_staff %}Staff User{% endif %}{% if user.is_superuser %} Admin User{% endif %}</td>
+              </tr>
+              <tr>
+                <td>Email</td>
+                <td>{{ user.email }}</td>
+                <td>{% if user.is_confirmed %}Verified{% else %}Unconfirmed{% endif %}</td>
+              </tr>
+              <tr>
+                <td>Joined</td>
+                <td>{{ user.date_joined }}</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+    </div>
+{% endblock content %}

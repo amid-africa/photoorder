@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load staticfiles bootstrap4 %}
+
+{% block title %}Email Confiermation Failed{% endblock %}
+
+{% block content %}
+    <div id="content-container" class="container p-none">
+        <div class="lgn-container col-lg-8">
+          <h2>Email Activation Failed</h2>
+          {% bootstrap_messages %}
+          <p>The email activation code supplied has failed.</p>
+        </div>
+    </div>
+{% endblock content %}

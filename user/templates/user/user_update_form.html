@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load staticfiles bootstrap4 %}
+
+{% block title %}Update{% endblock %}
+
+{% block content %}
+    <div id="content-container" class="container p-none">
+        <div class="lgn-container col-lg-8">
+            <form id="password-reset-form" method="post">
+                {% csrf_token %}
+                {% bootstrap_form form layout="horizontal" %}
+                {% bootstrap_button "Update" button_type="submit" button_class="btn-success" %}
+                <input type="hidden" name="next" value="{{ next }}" />
+            </form>
+        </div>
+    </div>
+{% endblock content %}

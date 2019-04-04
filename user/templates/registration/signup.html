@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load staticfiles bootstrap4 %}
+
+{% block title %}Signup / Register{% endblock %}
+
+{% block content %}
+    <div id="content-container" class="container p-none">
+        <div class="lgn-container col-lg-8">
+            <form id="login-form" method="post"
+                  action="{% url 'signup' %}">
+                {% csrf_token %}
+                {% bootstrap_form form layout="horizontal" %}
+                {% bootstrap_button "Sign up" button_type="submit" button_class="btn-success" %}
+                <input type="hidden" name="next" value="{{ next }}" />
+            </form>
+        </div>
+    </div>
+{% endblock content %}
