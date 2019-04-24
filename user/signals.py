@@ -22,7 +22,7 @@ def pre_check_email(sender, instance, **kwargs):
 @receiver(post_save,sender=User)
 def post_check_email(sender, instance, created, **kwargs):
     if not instance.is_confirmed:
-        subject = 'Activate Your MySite Account'
+        subject = 'Activate Your Photo Order Account'
         message = render_to_string('user/user_confirm_email.html', {
             'user': instance,
             'domain': current_site.domain,
