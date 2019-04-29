@@ -16,6 +16,14 @@ html, body {
   padding-bottom:330px;
 }
 
+img.thumbnail {
+  max-width: 5em;
+}
+
+.list-table-item {
+  display: inline-block;
+}
+
 section {
     padding: 60px 0;
     margin-top: 60px;

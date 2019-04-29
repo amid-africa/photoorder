@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'bootstrap4',
     'widget_tweaks',
     'rest_framework',
+    'products',
     'orders',
     'user',
 ]
