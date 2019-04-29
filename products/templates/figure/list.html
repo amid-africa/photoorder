@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 %}
+
+{% block title %}{{ block.super }} | Product Figures{% endblock %}
+{% block brand %}<span class="d-none d-md-inline">{{ block.super }} | </span>List Product Figures{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>Product Figures</h3>
+
+    <div class="btn-group pb-3 col-md-4" role="group" aria-label="">
+      <a href="{% url 'create_figure' %}" class="btn btn-info col-sm-12">Upload a new Figure</a>
+    </div>
+
+    <div class="list-group">
+      {% for object in object_list %}
+      <a href="{{ object.get_absolute_url }}" class="list-group-item list-group-item-action"><img src="{{ object.image.url }}" class="img-fluid thumbnail">{{ object.image.name }}</a>
+      {% endfor %}
+    </div>
+
+    <div class="btn-group pt-3 col-md-4" role="group" aria-label="">
+      <a href="{% url 'create_figure' %}" class="btn btn-info col-sm-12">Upload a new Figure</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

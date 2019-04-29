@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 %}
+
+{% block title %}{{ block.super }} | Products{% endblock %}
+{% block brand %}<span class="d-none d-md-inline">{{ block.super }} | </span>List Products{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>Products</h3>
+
+    <div class="btn-group pb-3 col-md-4" role="group" aria-label="">
+      <a href="{% url 'create_product' %}" class="btn btn-info col-sm-12">Create a new Product</a>
+    </div>
+
+    <div class="list-group">
+      {% for object in object_list %}
+      <a href="{{ object.get_absolute_url }}" class="list-group-item list-group-item-action">{{ object.title }}</a>
+      {% endfor %}
+    </div>
+
+    <div class="btn-group pt-3 col-md-4" role="group" aria-label="">
+      <a href="{% url 'create_product' %}" class="btn btn-info col-sm-12">Create a new Product</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

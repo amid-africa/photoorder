@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 %}
+
+{% block title %}{{ block.super }} | {{ object.title }}{% endblock %}
+{% block brand %}<span class="d-none d-md-inline">{{ block.super }} | </span>Product: {{ object.title }} {% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>Product: {{ object.title }}</h3>
+
+    <div class="btn-group pb-3 col-lg-4 col-md-6" role="group" aria-label="">
+      <a href="{% url 'list_product' %}" class="btn btn-primary col-sm-6">List Product</a>
+      <a href="{% url 'edit_product' pk=object.pk %}" class="btn btn-info col-sm-6">Edit Product</a>
+      <a href="{% url 'create_print' pk=object.pk %}" class="btn btn-warning col-sm-6">Product Prints</a>
+    </div>
+
+    <div class="list-group">
+      <li class="list-group-item"><div class="col-lg-2 col-md-3 list-table-item"><strong>Title</strong></div><div class="col-lg-10 col-md-9 list-table-item">{{ object.title }}</div></li>
+      <li class="list-group-item"><div class="col-lg-2 col-md-3 list-table-item"><strong>Description</strong></div><div class="col-lg-10 col-md-9 list-table-item">{{ object.description }}</div></li>
+      <li class="list-group-item"><div class="col-lg-2 col-md-3 list-table-item"><strong>Category</strong></div><div class="col-lg-10 col-md-9 list-table-item">{{ object.product_category }}</div></li>
+      <li class="list-group-item"><div class="col-lg-2 col-md-3 list-table-item"><strong>Owner</strong></div><div class="col-lg-10 col-md-9 list-table-item">{{ object.owner }}</div></li>
+      <li class="list-group-item"><div class="col-lg-2 col-md-3 list-table-item"><strong>Figure</strong></div><div class="col-lg-10 col-md-9 list-table-item"><img src="{{ object.product_figure.image.url }}" class="img-fluid thumbnail"></div></li>
+      <li class="list-group-item"><div class="col-lg-2 col-md-3 list-table-item"><strong>Images</strong></div><div class="col-lg-10 col-md-9 list-table-item">
+        <ol>
+      {% for image in object.productimage_set.all %}
+          <li>
+            <strong>Ratio (x/y)</strong>: {{ image.ratio }},
+            <strong>Required</strong>: {{ image.required }},
+            <strong>Rotatable</strong>: {{ image.rotatable }},
+            <strong>Minimum Megapixels</strong>: {{ image.min_megapixels }},
+            <strong>Warning Megapixels</strong>: {{ image.warn_megapixels }}
+          </li>
+      {% endfor %}
+        </ol>
+      </div></li>
+    </div>
+
+    <div class="btn-group pt-3 col-lg-4 col-md-6" role="group" aria-label="">
+      <a href="{% url 'list_product' %}" class="btn btn-primary col-sm-6">List Product</a>
+      <a href="{% url 'edit_product' pk=object.pk %}" class="btn btn-info col-sm-6">Edit Product</a>
+      <a href="{% url 'create_print' pk=object.pk %}" class="btn btn-warning col-sm-6">Product Prints</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
