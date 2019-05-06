@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 %}
+
+{% block title %}{{ block.super }} | Create Currency{% endblock %}
+{% block brand %}<span class="d-none d-md-inline">{{ block.super }} | </span>Create Currency{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>Create currency for pricelist: {{ pricelist }}</h3>
+    <h5>Current Currencies</h5>
+    <div class="list-group">
+      {% for currency in pricelist.pricelistcurrency_set.all %}
+      <a href="{{ currency.get_absolute_url }}" class="list-group-item list-group-item-action">
+        {{forloop.counter}}.
+        <strong>{% if currency.base %}BASE {% endif %}Currency</strong>: {{ currency.title }},
+        <strong>Code</strong>: {{ currency.code }},
+        <strong>Symbol</strong>: {{ currency.symbol }},
+        <strong>Rate</strong>: {{ currency.current_rate }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col">
+    <h5>Add Another Currency</h5>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% bootstrap_form form %}
+      <div class="btn-group pt-3 col-lg-4 col-md-6" role="group" aria-label="">
+        <button class="btn btn-primary col-sm-6" type="submit">Create</button>
+        <a href="{% url 'detailed_pricelist' pk=pricelist.pk %}" class="btn btn-danger col-sm-6">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

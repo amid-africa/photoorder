@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 %}
+
+{% block title %}{{ block.super }} | {{ object.title }}{% endblock %}
+{% block brand %}<span class="d-none d-md-inline">{{ block.super }} | </span>Pricelist: {{ object.title }} {% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>Pricelist: {{ object.title }}</h3>
+
+    <div class="btn-group pb-3 col-lg-6 col-md-8" role="group" aria-label="">
+      <a href="{% url 'edit_pricelist' pk=object.pk %}" class="btn btn-success col-sm-4">Edit Pricelist</a>
+      <a href="{% url 'create_currency' pk=object.pk %}" class="btn btn-info col-sm-4">Currencies</a>
+      <a href="{% url 'create_pricelistproduct' pk=object.pk %}" class="btn btn-warning col-sm-4">Products</a>
+    </div>
+
+    <div class="btn-group pb-3 col-lg-2 col-md-4 pull-right" role="group" aria-label="">
+      <a href="{% url 'list_pricelist' %}" class="btn btn-primary col-sm-12">List Pricelist</a>
+    </div>
+
+    <div class="list-group">
+      <li class="list-group-item"><div class="col-lg-2 col-md-3 list-table-item"><strong>Title</strong></div><div class="col-lg-10 col-md-9 list-table-item">{{ object.title }}</div></li>
+      <li class="list-group-item"><div class="col-lg-2 col-md-3 list-table-item"><strong>Description</strong></div><div class="col-lg-10 col-md-9 list-table-item">{{ object.description }}</div></li>
+      <li class="list-group-item"><div class="col-lg-2 col-md-3 list-table-item"><strong>Products</strong></div><div class="col-lg-10 col-md-9 list-table-item">
+        <ol>
+          {% for product in object.pricelistproduct_set.all %}
+              <li>
+                <strong>{{ product.product }}</strong>
+              </li>
+          {% endfor %}
+        </ol>
+      </div></li>
+      <li class="list-group-item"><div class="col-lg-2 col-md-3 list-table-item"><strong>Currency</strong></div><div class="col-lg-10 col-md-9 list-table-item">
+        <ol>
+          {% for currency in object.pricelistcurrency_set.all %}
+              <li>
+                <strong>{{ currency.title }}</strong>: {{ currency.symbol }}, {{ currency.code }}
+              </li>
+          {% endfor %}
+        </ol>
+      </div></li>
+    </div>
+
+    <div class="btn-group pt-3 col-lg-6 col-md-8" role="group" aria-label="">
+      <a href="{% url 'edit_pricelist' pk=object.pk %}" class="btn btn-success col-sm-4">Edit Pricelist</a>
+      <a href="{% url 'create_currency' pk=object.pk %}" class="btn btn-info col-sm-4">Currencies</a>
+      <a href="{% url 'create_pricelistproduct' pk=object.pk %}" class="btn btn-warning col-sm-4">Products</a>
+    </div>
+
+    <div class="btn-group pt-3 col-lg-2 col-md-4 pull-right" role="group" aria-label="">
+      <a href="{% url 'list_pricelist' %}" class="btn btn-primary col-sm-12">List Pricelist</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

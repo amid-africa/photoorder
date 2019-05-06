@@ -12,10 +12,6 @@ class ProductForm(forms.ModelForm):
 
 """Product Image create/edit"""
 class ProductImageForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super(ProductImageForm, self).__init__(*args, **kwargs)
-        # self.fields['product'].disabled = True
-
     class Meta:
         model = ProductImage
         fields = '__all__'

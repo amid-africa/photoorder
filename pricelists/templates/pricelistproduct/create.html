@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 %}
+
+{% block title %}{{ block.super }} | Create Product{% endblock %}
+{% block brand %}<span class="d-none d-md-inline">{{ block.super }} | </span>Create Pricelist Product{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>Pricelist: {{ pricelist }}</h3>
+    <h5>Current Products</h5>
+    <div class="list-group">
+      {% for product in pricelist.pricelistproduct_set.all %}
+      <a href="{{ product.get_absolute_url }}" class="list-group-item list-group-item-action">
+        {{forloop.counter}}.
+        <strong>Product</strong>: {{ product.product }},
+        <strong>Base Price</strong>: {{ product.current_price }}
+      </a>
+      {% empty %}
+      <h6>No products added yet.</h6>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col">
+    <h5>Add Another Product</h5>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% bootstrap_form form layout='horizontal' %}
+      <button class="btn btn-primary" type="submit">Add Product</button>
+    </form>
+    <div class="btn-group pt-3 col-lg-4 col-md-6" role="group" aria-label="">
+      <a href="{% url 'detailed_pricelist' pk=pricelist.pk %}" class="btn btn-danger col-sm-6">Cancel</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'rest_framework',
     'products',
+    'pricelists',
     'orders',
     'user',
 ]
