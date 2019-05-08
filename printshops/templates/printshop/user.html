@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 widget_tweaks %}
+
+{% block title %}{{ block.super }} | Users: {{ printshop }} {% endblock %}
+{% block brand %}<span class="d-none d-md-inline">{{ block.super }} | </span>Users: {{ printshop }} {% endblock %}
+
+{% block js %}
+<script language="Javascript">
+  $(function () {
+
+    {# update the user list #}
+    function update_list() {
+      $.post("{% url 'print_shop_user' slug=slug %}", {
+            "csrfmiddlewaretoken": "{{ csrf_token }}",
+            "action": "LIST"
+          },
+          function(result){$("#staff-table").html(result);}
+      );
+    }
+
+    {# add new user dialog #}
+    $('.btn-new').click(function(){
+      $.post( "{% url 'print_shop_user' slug=slug %}", {
+        "csrfmiddlewaretoken": "{{ csrf_token }}", "action": "NEW" },
+        function( data ) {
+          {# emptly the options from user select and  populate from data #}
+          $('#id_user').empty();
+          $.each(JSON.parse(data.userlist), function(i, obj) {
+            $('#id_user').append($("<option></option>")
+                         .attr("value",obj.pk)
+                         .text(obj.fields.email));
+          });
+        }, "json");
+
+        //Reset the form
+        $(".is-invalid").removeClass("is-invalid");
+        $(".alert-dismissible").remove();
+        $("#shopuserform")[0].reset();
+        $('#id_id').val('');
+        $('#button-create').text('Create User');
+        $('#button-deactivate').prop( "disabled", true );
+        $("#userModal").modal();
+    });
+
+    {# Populate the form when table row is clicked #}
+    $(document).on('click', 'tr', function () {
+      $.post( "{% url 'print_shop_user' slug=slug %}", {
+          "csrfmiddlewaretoken": "{{ csrf_token }}",
+          "action": "EDIT", "id": $(this).data("id")
+        },
+        function( data ) {
+          // Reset the form
+          $(".is-invalid").removeClass("is-invalid");
+          $(".alert-dismissible").remove();
+          $('#user-modal-title').text('Update User');
+          $("#shopuserform")[0].reset();
+          $('#button-deactivate').prop( "disabled", false );
+
+          // Populate the form from data
+          $('#id_id').val(data.id);
+          $('#id_user').val(data.user);
+          $('#id_admin').prop('checked', data.admin);
+          $('#id_order_notifications').prop('checked', data.order_notifications);
+          $('#id_customer_notifications').prop('checked', data.customer_notifications);
+          $('#id_service_notifications').prop('checked', data.service_notifications);
+          $('#button-create').text('Update User');
+          if (data.active) {
+            $('#button-deactivate').text('Deactivate');
+          } else {
+            $('#button-deactivate').text('Activate');
+          }
+          {# emptly the options from user select and  populate from data #}
+          $('#id_user').empty();
+          $.each(JSON.parse(data.userlist), function(i, obj) {
+            if (obj.pk==data.id){
+              $('#id_user').append($("<option selected></option>")
+                           .attr("value",obj.pk)
+                           .text(obj.fields.email));
+            }else{
+              $('#id_user').append($("<option></option>")
+                           .attr("value",obj.pk)
+                           .text(obj.fields.email));
+            }
+          });
+
+        }, "json");
+
+        $("#userModal").modal();
+    });
+
+    {# Remove a user when delete is pressed #}
+    $(document).on('click', '.btn-delete', function () {
+      var res = confirm("Confirm delete user.");
+      if (res == true) {
+        $.post( "{% url 'print_shop_user' slug=slug %}", {
+            "csrfmiddlewaretoken": "{{ csrf_token }}",
+            "action": "Delete", "id": $(this).parent('.btn-group').data('id')
+          },
+          function( data ) {
+            if (data.is_valid) {
+              update_list();
+            }
+          }, "json");
+      }
+    });
+
+    {# Activate / Deactivate a user #}
+    $('#button-deactivate').click(function(){
+      $.post( "{% url 'print_shop_user' slug=slug %}", {
+          "csrfmiddlewaretoken": "{{ csrf_token }}",
+          "action": "DEACTIVATE", "id": $('#id_id').val()
+        },
+        function( data ) {
+          if (data.is_valid) {
+            update_list();
+            if ($('#button-deactivate').text() == 'Deactivate'){
+              $('#button-deactivate').text('Activate');
+            } else {
+              $('#button-deactivate').text('Deactivate');
+            }
+          }
+          if( data.error) {
+            var errors = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Error: </strong>' + data.error + ' <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
+            $('#shopuserform').prepend(errors);
+          }
+        }
+      );
+    });
+
+    {# Save the form #}
+    $('#button-create').click(function () {
+      $(".is-invalid").removeClass("is-invalid");
+      $(".alert-dismissible").remove();
+      data = $('#shopuserform').serialize() + '&printshop=' + $('#id_printshop').children("option:selected").val();
+      $.post( "{% url 'print_shop_user' slug=slug %}",
+        data,
+        function( data ) {
+          if( data.error) {
+            errortext = '';
+            $.each(data.error, function(key, value) {
+              if (key == '__all__'){
+                errortext += value + "<br/>";
+              } else {
+                errortext += key + ": " + value + "<br/>";
+                $('#id_' + key).addClass("is-invalid");
+              }
+            });
+            var errors = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Error: </strong>' + errortext + ' <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
+            $('#shopuserform').prepend(errors);
+          } else {
+            update_list();
+            $("#userModal").modal("hide");
+            $("#shopuserform")[0].reset();
+            $('#id_id').val('');
+            $('#button-create').text('Create User');
+          }
+        },
+        "json");
+      });
+
+      {# Populate the list on page load #}
+      update_list();
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h2>{{ printshop }}</h2>
+    {% bootstrap_button "Shop details" button_type="link" href=printshop.get_absolute_url button_class="btn-primary" extra_classes="col-md-4 col-sm-12 mb-3 mt-3" %}<br/>
+    {% bootstrap_button "Add New Staff User" button_type="button" button_class="btn-info" extra_classes="btn-new col-md-4 col-sm-12 mb-3 mt-3" %}
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="thead-light">
+          <th>Name</th>
+          <th>Email</th>
+          <th>Admin</th>
+          <th>Notifications</th>
+          <th>Active</th>
+        </thead>
+        <tbody id='staff-table'></tbody>
+        <thead class="thead-light">
+          <th>Name</th>
+          <th>Email</th>
+          <th>Admin</th>
+          <th>Notifications</th>
+          <th>Active</th>
+        </thead>
+      </table>
+    </div>
+    {% bootstrap_button "Add New Staff User" button_type="button" button_class="btn-info" extra_classes="btn-new col-md-4 col-sm-12 mb-3 mt-3" %}
+  </div>
+</div>
+
+<!-- The Modal -->
+<div class="modal" id="userModal">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <h4 class="modal-title" id="user-modal-title">Modal Heading</h4>
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+        <form id="shopuserform" class="form">
+          {% csrf_token %}
+           <input type="hidden" id="id_id" name="id" value="">
+          {% bootstrap_form_errors form %}
+          <div class="form-group row">
+          {% bootstrap_label "Print Shop" label_class="col-md-3" %}
+            <div class="col-md-9">
+            {% render_field form.printshop|append_attr:"disabled" class="form-control" %}
+            </div>
+          </div>
+          {% bootstrap_field form.user layout='horizontal' %}
+          <div class=row>
+          {% bootstrap_field form.admin form_group_class="col-md-3" %}
+          {% bootstrap_field form.order_notifications form_group_class="col-md-3" %}
+          {% bootstrap_field form.customer_notifications form_group_class="col-md-3" %}
+          {% bootstrap_field form.service_notifications form_group_class="col-md-3" %}
+          </div>
+        </form>
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer">
+        <div class="btn-group" role="group" aria-label="">
+          <button type="button" class="btn btn-warning" id="button-deactivate">Deactivate User</button>
+          <button type="button" class="btn btn-primary" id="button-create">Create User</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

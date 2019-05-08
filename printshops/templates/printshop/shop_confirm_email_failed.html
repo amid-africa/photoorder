@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 %}
+
+{% block title %}{{ block.super }} | Print Shops Email Confiermation Failed{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+          <h2>Shop Email Confirmation Failed</h2>
+          {% bootstrap_messages %}
+          <p>The email activation code supplied has failed.</p>
+    </div>
+</div>
+{% endblock content %}

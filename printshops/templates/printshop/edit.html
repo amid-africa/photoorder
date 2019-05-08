@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 %}
+
+{% block title %}{{ block.super }} | Edit Print Shop {% endblock %}
+{% block brand %}<span class="d-none d-md-inline">{{ block.super }} | </span>Edit: {{ object.name }} {% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% bootstrap_form form %}
+      <div class="btn-group col-lg-6 col-md-8 col-sm-12 pull-right" role="group" aria-label="">
+        <button class="btn btn-success col-sm-6 btn-lg" type="submit">Save Changes</button>
+        <a href="{% url 'details_print_shop' slug=object.slug %}" class="btn btn-danger col-sm-6 btn-lg">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

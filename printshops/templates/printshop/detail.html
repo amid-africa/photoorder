@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 %}
+
+{% block title %}{{ block.super }} | {{ object.name }}{% endblock %}
+{% block brand %}<span class="d-none d-md-inline">{{ block.super }} | </span>Print Shop: {{ object.name }} {% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <table class="table">
+      <tbody>
+        <tr class="text-center"><td>Name:</td><td>{{ object.name }}</td></tr>
+        <tr class="text-center"><td>Logo:</td><td><img src="{{ object.logo.url }}" class="img-fluid thumbnail"></td></tr>
+        <tr class="text-center"><td>Slug:</td><td>{{ object.slug }}</td></tr>
+        <tr class="text-center"><td>About Us:</td><td>{{ object.about }}</td></tr>
+        <tr class="text-center"><td>Email:</td><td>{{ object.email }}{% if object.email_confirmed %} Confirmed {% endif %}</td></tr>
+        <tr class="text-center"><td>Phone:</td><td>{{ object.phone }}</td></tr>
+        <tr class="text-center"><td>Address:</td><td>{{ object.address_line1 }}{% if object.address_line2 %}<br>{{ object.address_line2 }}{% endif %}</td></tr>
+        <tr class="text-center"><td>Postcode:</td><td>{{ object.postal_code }}</td></tr>
+        <tr class="text-center"><td>City:</td><td>{{ object.city }}</td></tr>
+        <tr class="text-center"><td>State / Province:</td><td>{{ object.state_province }}</td></tr>
+        <tr class="text-center"><td>Country:</td><td>{{ object.country }}</td></tr>
+        <tr class="text-center"><td>Coordinates:</td><td>{{ object.latitude }} / {{ object.longitude }}</td></tr>
+        <tr class="text-center"><td>Date Registered:</td><td>{{ object.date_added }}</td></tr>
+        <tr class="text-center"><td>Date Last Updated:</td><td>{{ object.date_updated }}</td></tr>
+        {% if admin_user or staff_user %}
+        <tr class="text-center"><td>Staff:</td><td>
+          {% for staff in object.printshopuser_set.all %}
+          {{ staff.user.name }}{% if staff.admin %} (Shop Admin){% endif %}<br/>
+          {% endfor %}
+        </td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+    <div class="btn-group" role="group" aria-label="">
+      <a href="{% url 'home' %}" class="btn btn-primary">Home Page</a>
+      <a href="{% url 'list_print_shop' %}" class="btn btn-secondary">List Print Shop</a>
+      {% if admin_user %}
+      <a href="{% url 'edit_print_shop' slug=object.slug %}" class="btn btn-success">Edit Shop</a>
+      <a href="{% url 'print_shop_user' slug=object.slug %}" class="btn btn-info">Shop Users</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
