@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% load static bootstrap4 %}
+
+{% block title %}{{ block.super }} | Create Product{% endblock %}
+{% block brand %}<span class="d-none d-md-inline">{{ block.super }} | </span>Create Pricelist Product{% endblock %}
+
+{% block js %}
+<script language="Javascript">
+  $(function () {
+    {# Delete the pricelist #}
+    $('.btn-delete').click(function () {
+      $.post( "{% url 'delete_printshop_pricelist' slug=printshop.slug %}", {
+          "csrfmiddlewaretoken": "{{ csrf_token }}", "id": $(this).data("id")
+      }, function() {
+        location.reload();
+      });
+    });
+  });
+</script>
+{% endblock js %}
+
+{% block content %}
+<div class="row">
+  <div class="col">
+    <h3>Print Shop: {{ printshop }}</h3>
+    <h5>Current Pricelists</h5>
+    <div class="list-group">
+      {% for pricelist in printshop.printshoppricelist_set.all %}
+      <li class="list-group-item">
+        {{forloop.counter}}.
+        <strong>{{ pricelist.pricelist }}</strong>
+        <button class="btn btn-danger btn-sm pull-right btn-delete" data-id="{{ pricelist.pk }}" type="button">Remove</button>
+      </li>
+      {% empty %}
+      <h6>No pricelists added yet.</h6>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col">
+    <h5>Add Another Product</h5>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {% bootstrap_form form layout='horizontal' %}
+      <button class="btn btn-primary" type="submit">Add Pricelist</button>
+    </form>
+    <div class="btn-group pt-3 col-lg-4 col-md-6" role="group" aria-label="">
+      <a href="{% url 'details_print_shop' slug=printshop.slug %}" class="btn btn-danger col-sm-6">Close</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

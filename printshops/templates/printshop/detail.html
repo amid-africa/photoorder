@@ -27,7 +27,12 @@
         {% if admin_user or staff_user %}
         <tr class="text-center"><td>Staff:</td><td>
           {% for staff in object.printshopuser_set.all %}
-          {{ staff.user.name }}{% if staff.admin %} (Shop Admin){% endif %}<br/>
+          {{forloop.counter}}. {{ staff.user.name }}{% if staff.admin %} (Shop Admin){% endif %}<br/>
+          {% endfor %}
+        </td></tr>
+        <tr class="text-center"><td>Price Lists:</td><td>
+          {% for pricelist in object.printshoppricelist_set.all %}
+          {{forloop.counter}}. {{ pricelist.pricelist }}<br/>
           {% endfor %}
         </td></tr>
         {% endif %}
@@ -40,6 +45,7 @@
       {% if admin_user %}
       <a href="{% url 'edit_print_shop' slug=object.slug %}" class="btn btn-success">Edit Shop</a>
       <a href="{% url 'print_shop_user' slug=object.slug %}" class="btn btn-info">Shop Users</a>
+      <a href="{% url 'create_printshop_pricelist' slug=object.slug %}" class="btn btn-warning">Shop Price Lists</a>
       {% endif %}
     </div>
   </div>

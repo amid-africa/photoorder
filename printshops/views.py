@@ -17,8 +17,8 @@ from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 
-from .forms import PrintShopForm, PrintShopUserForm
-from .models import PrintShop, PrintShopUser
+from .forms import PrintShopForm, PrintShopUserForm, PrintShopPriceListForm
+from .models import PrintShop, PrintShopUser, PrintShopPriceList
 from .token import validate_confirmation_token, confirmation_token
 
 User = get_user_model()
@@ -276,3 +276,52 @@ class PrintShopUserView(View):
 
         # Return Response
         return JsonResponse(data)
+
+
+"""Assign priceslists to the printshop"""
+class CreatePrintShopPriceListView(CreateView):
+    template_name = 'printshop/pricelist.html'
+    model = PrintShopPriceList
+    form_class = PrintShopPriceListForm
+    printshop = None
+
+    # Set the success url to be the current url
+    def get_success_url(self):
+        return self.request.path
+
+    # Set the printshop form field from the printshop slug and raise a 404 if not shop admin
+    def get_initial(self):
+        self.printshop = get_object_or_404(PrintShop, slug=self.kwargs.get('slug'))
+        if not self.printshop.is_shop_admin(self.request.user) and not self.request.user.is_staff:
+            raise Http404
+        return {
+            'printshop':self.printshop,
+        }
+
+    #Add printshop data to the context
+    def get_context_data(self, *args, **kwargs):
+        context = super(CreatePrintShopPriceListView, self).get_context_data(*args, **kwargs)
+        context['printshop'] = self.printshop
+        return context
+
+
+"""Delete a pricelist from a printshop"""
+class DeletePrintShopPriceListView(View):
+    def post(self, request, **kwargs):
+
+        # Get the printshop
+        slug = self.kwargs['slug']
+        printshop = get_object_or_404(PrintShop, slug=slug)
+
+        # Render a 404 page if request.user is not a shop admin
+        if not printshop.is_shop_admin(self.request.user):
+            raise Http404
+
+        # Get the printshoppricelist instance
+        printshoppricelist = get_object_or_404(PrintShopPriceList, pk=self.request.POST['id'], printshop=printshop)
+
+        # Delete the instance
+        messages.success(request, "Price list '{}' has been removed from print shop '{}'.".format(printshoppricelist.pricelist, printshoppricelist.printshop))
+        printshoppricelist.delete()
+
+        return JsonResponse({'is_valid': True})
