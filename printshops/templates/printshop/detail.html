@@ -26,8 +26,8 @@
         <tr class="text-center"><td>Date Last Updated:</td><td>{{ object.date_updated }}</td></tr>
         {% if admin_user or staff_user %}
         <tr class="text-center"><td>Staff:</td><td>
-          {% for staff in object.printshopuser_set.all %}
-          {{forloop.counter}}. {{ staff.user.name }}{% if staff.admin %} (Shop Admin){% endif %}<br/>
+          {% for member in staff %}
+          {{forloop.counter}}. {{ member.user.name }}{% if member.admin %} (Shop Admin){% endif %}<br/>
           {% endfor %}
         </td></tr>
         <tr class="text-center"><td>Price Lists:</td><td>

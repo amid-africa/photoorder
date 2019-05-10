@@ -18,7 +18,7 @@ from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import ListView
 
 from .forms import PrintShopForm, PrintShopUserForm, PrintShopPriceListForm
-from .models import PrintShop, PrintShopUser, PrintShopPriceList
+from .models import PrintShop, PrintShopGroup, PrintShopUser, PrintShopPriceList
 from .token import validate_confirmation_token, confirmation_token
 
 User = get_user_model()
@@ -101,12 +101,20 @@ class CreatePrintShopView(SuccessMessageMixin, CreateView):
     def form_invalid(self, form):
         return super(CreatePrintShopView, self).form_invalid(form)
 
-    """Get the slug for the success_url and create the first user"""
+    """Get the slug for the success_url and create the user group and user"""
     def form_valid(self, form):
         printshop = form.save()
         self.slug = printshop.slug
-        PrintShopUser.objects.update_or_create(printshop=printshop,
-            user=self.request.user, defaults={'admin': True, 'creator': True})
+
+        # Create the user Group
+        group, create = PrintShopGroup.objects.get_or_create(printshop=printshop,
+                    defaults={'title':'{} - User Group'.format(printshop.name)})
+
+        # Add the current user to the group
+        user, create = PrintShopUser.objects.get_or_create(group=group,
+                    user=self.request.user,
+                    defaults={'admin': True, 'creator': True})
+
         return super(CreatePrintShopView, self).form_valid(form)
 
     def get_success_url(self):
@@ -126,19 +134,22 @@ class DetailedPrintShopView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(DetailedPrintShopView, self).get_context_data(**kwargs)
+
+        # Only display email confirmation message if there are no other messages and user is owner or staff
         if not context['printshop'].email_confirmed:
-            # Only display email confirmation message if there are no other messages and user is owner or staff
             storage = messages.get_messages(self.request)
             if not storage and context['printshop'].is_shop_staff(self.request.user):
                 messages.error(self.request, mark_safe('Shop Email address must be confirmed to prevent automatic deactivation. Check your email urgently! <a href="{}" class="btn btn-danger">Resend Confirmation Email</a>'.format(reverse('print_shop_email_confirm', kwargs={'slug': self.object.slug}))))
 
-        context['admin_user'] = False
-        context['staff_user'] = False
-        if self.request.user.is_authenticated:
-            context['admin_user'] = PrintShopUser.objects.filter(
-                printshop=context['printshop'], user=self.request.user, admin=True)
-            context['staff_user'] = PrintShopUser.objects.filter(
-                printshop=context['printshop'], user=self.request.user)
+        # Add to context if current user is active admin or active staff.
+        user_group = PrintShopGroup.objects.get(printshop=context['printshop'])
+        context['admin_user'] = user_group.is_admin(self.request.user)
+        context['staff_user'] = user_group.is_member(self.request.user)
+
+        # Add to context all staff, only if current user is group member or staff user
+        context['staff'] = None
+        if user_group.is_member(self.request.user) or self.request.user.is_staff:
+            context['staff'] = user_group.member_set()
 
         return context
 
@@ -157,13 +168,15 @@ class PrintShopUserView(View):
             raise Http404
 
         # Get all the staff
-        staff_users = PrintShopUser.objects.filter(printshop=printshop)
+        staff_group = PrintShopGroup.objects.get(printshop=printshop)
+        staff_users = staff_group.member_set()
 
         return render(self.request, self.template_name, {
-            'form': PrintShopUserForm(initial={'printshop': printshop}),
+            'form': PrintShopUserForm(initial={'group': staff_group}),
             'printshop': printshop,
             'staff_users': staff_users,
             'slug': slug })
+
 
     def post(self, request, **kwargs):
         data = {'is_valid': False}
@@ -172,7 +185,7 @@ class PrintShopUserView(View):
         if 'action' in self.request.POST:
             slug = self.kwargs['slug']
             printshop = get_object_or_404(PrintShop, slug=slug)
-            printshopusers = get_list_or_404(PrintShopUser, printshop=printshop)
+            printshopusers =  PrintShopGroup.objects.get(printshop=printshop).member_set()
 
             # Render a 404 page if request.user is not a shop admin
             if not printshop.is_shop_admin(self.request.user):
@@ -183,7 +196,7 @@ class PrintShopUserView(View):
                 list = ''
                 for staff in printshopusers:
                     listrow = '<tr class="row-edit {}" data-id="{}"><td>{}</td><td>{}</td>'.format(
-                            'table-success' if staff.admin else '' if staff.active else 'table-danger',
+                            'table-success' if staff.admin else '' if staff.user.is_active else 'table-danger',
                             staff.id, staff.user.name, staff.user.email)
 
                     listrow += '<td>{}{}</td><td>{}{}{}</td><td>{}</td>'.format(
@@ -192,7 +205,7 @@ class PrintShopUserView(View):
                             'Customer Orders<br/>' if staff.order_notifications else '',
                             'Customer Queries<br/>' if staff.customer_notifications else '',
                             'Service Notices' if staff.service_notifications else '',
-                            'Active' if staff.active else 'Disabled')
+                            'Active' if staff.user.is_active else 'Disabled')
 
                     list += listrow
                 return HttpResponse(list)
@@ -201,7 +214,7 @@ class PrintShopUserView(View):
             """Get details for new user"""
             if self.request.POST['action'] == 'NEW':
                 # Get the unselected users for the user select field
-                existing = PrintShopUser.objects.filter(printshop=printshop).values_list('user')
+                existing = PrintShopGroup.objects.get(printshop=printshop).member_set().values_list('user')
                 users = User.objects.filter(is_active=True).exclude(id__in=existing)
 
                 data = {
@@ -211,17 +224,19 @@ class PrintShopUserView(View):
 
             """Get user shop user details for editing"""
             if self.request.POST['action'] == 'EDIT':
-                printshopuser = get_object_or_404(PrintShopUser, id=self.request.POST['id'], printshop=printshop)
+                printshopuser = get_object_or_404(PrintShopUser, id=self.request.POST['id'])
 
                 # Get the unselected users for the user select field
-                existing = PrintShopUser.objects.filter(printshop=printshop).exclude(user=printshopuser.user).values_list('user')
+                existing = PrintShopGroup.objects.get(printshop=printshop).member_set().exclude(user=printshopuser.user).values_list('user')
+                #existing = PrintShopUser.objects.filter(printshop=printshop).exclude(user=printshopuser.user).values_list('user')
                 users = User.objects.filter(is_active=True).exclude(id__in=existing)
 
                 data = {
                     'id': printshopuser.id,
                     'user': printshopuser.user.id,
                     'admin': printshopuser.admin,
-                    'active': printshopuser.active,
+                    'creator': printshopuser.creator,
+                    'active': printshopuser.user.is_active,
                     'order_notifications': printshopuser.order_notifications,
                     'customer_notifications': printshopuser.customer_notifications,
                     'service_notifications': printshopuser.service_notifications,

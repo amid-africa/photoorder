@@ -70,3 +70,65 @@ class User(AbstractBaseUser):
 
     def has_module_perms(self, app_label):
        return self.is_superuser
+
+
+class Group(models.Model):
+    title = models.CharField(_('Title'), max_length=64)
+    is_active = models.BooleanField(_('Active Group'), default=True)
+    date_added = models.DateTimeField(_('Created'), auto_now_add=True)
+    date_updated = models.DateTimeField(_('Last Updated'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('User Group')
+        verbose_name_plural = _('User Groups')
+        ordering = ('title', )
+
+    def __str__(self):
+        return self.title
+
+    def member_set(self):
+        return GroupUser.objects.filter(group=self).order_by('user')
+
+    def is_member(self, user):
+        if GroupUser.objects.filter(group=self, user=user,
+                                    user__is_active=True):
+            return True
+        else:
+            return False
+
+    def is_admin(self, user):
+        if GroupUser.objects.filter(group=self, user=user,
+                                    user__is_active=True, admin=True):
+            return True
+        else:
+            return False
+
+    # Email all active members
+    def email_all(self, subject, message, from_email=None, **kwargs):
+        user_set = GroupUser.objects.filter(group=self, user__is_active=True)
+        for member in user_set:
+            member.user.email_user(subject, message, from_email, **kwargs)
+
+    # Email all active admins
+    def email_admin(self, subject, message, from_email=None, **kwargs):
+        user_set = GroupUser.objects.filter(group=self, user__is_active=True,
+                                            admin=True)
+        for member in user_set:
+            member.user.email_user(subject, message, from_email, **kwargs)
+
+
+class GroupUser(models.Model):
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    admin = models.BooleanField(_('Group Administrator'), default=False)
+    date_added = models.DateTimeField(_('Created'), auto_now_add=True)
+    date_updated = models.DateTimeField(_('Last Updated'), auto_now=True)
+
+    class Meta:
+        ordering = ('group', 'admin', 'user',)
+        unique_together = ("group", "user")
+        verbose_name = _('User Group Member')
+        verbose_name_plural = _('User Group Members')
+
+    def __str__(self):
+        return '{} - {}'.format(self.group, self.user)

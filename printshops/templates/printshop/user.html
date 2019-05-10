@@ -36,10 +36,13 @@
         //Reset the form
         $(".is-invalid").removeClass("is-invalid");
         $(".alert-dismissible").remove();
+        $('#user-modal-title').text('Create User');
         $("#shopuserform")[0].reset();
         $('#id_id').val('');
         $('#button-create').text('Create User');
-        $('#button-deactivate').prop( "disabled", true );
+        $('#button-delete').prop( "disabled", true );
+        $('#id_user').prop( "disabled", false );
+        $('#id_admin').prop( "disabled", false );
         $("#userModal").modal();
     });
 
@@ -55,7 +58,16 @@
           $(".alert-dismissible").remove();
           $('#user-modal-title').text('Update User');
           $("#shopuserform")[0].reset();
-          $('#button-deactivate').prop( "disabled", false );
+          {# creator cant change user or not be admin #}
+          if (data.creator){
+            $('#button-delete').prop( "disabled", true );
+            $('#id_user').prop( "disabled", true );
+            $('#id_admin').prop( "disabled", true );
+          } else {
+            $('#button-delete').prop( "disabled", false );
+            $('#id_user').prop( "disabled", false );
+            $('#id_admin').prop( "disabled", false );
+          }
 
           // Populate the form from data
           $('#id_id').val(data.id);
@@ -65,11 +77,6 @@
           $('#id_customer_notifications').prop('checked', data.customer_notifications);
           $('#id_service_notifications').prop('checked', data.service_notifications);
           $('#button-create').text('Update User');
-          if (data.active) {
-            $('#button-deactivate').text('Deactivate');
-          } else {
-            $('#button-deactivate').text('Activate');
-          }
           {# emptly the options from user select and  populate from data #}
           $('#id_user').empty();
           $.each(JSON.parse(data.userlist), function(i, obj) {
@@ -106,19 +113,14 @@
     });
 
     {# Activate / Deactivate a user #}
-    $('#button-deactivate').click(function(){
+    $('#button-delete').click(function(){
       $.post( "{% url 'print_shop_user' slug=slug %}", {
           "csrfmiddlewaretoken": "{{ csrf_token }}",
-          "action": "DEACTIVATE", "id": $('#id_id').val()
+          "action": "DELETE", "id": $('#id_id').val()
         },
         function( data ) {
           if (data.is_valid) {
             update_list();
-            if ($('#button-deactivate').text() == 'Deactivate'){
-              $('#button-deactivate').text('Activate');
-            } else {
-              $('#button-deactivate').text('Deactivate');
-            }
           }
           if( data.error) {
             var errors = '<div class="alert alert-danger alert-dismissible fade show" role="alert"><strong>Error: </strong>' + data.error + ' <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>'
@@ -132,10 +134,13 @@
     $('#button-create').click(function () {
       $(".is-invalid").removeClass("is-invalid");
       $(".alert-dismissible").remove();
-      data = $('#shopuserform').serialize() + '&printshop=' + $('#id_printshop').children("option:selected").val();
-      $.post( "{% url 'print_shop_user' slug=slug %}",
-        data,
-        function( data ) {
+
+      data = $('#shopuserform').serialize()
+      if ($('#id_group').prop('disabled')) { data += '&group=' + $('#id_group').children("option:selected").val(); }
+      if ($('#id_user').prop('disabled')) { data += '&user=' + $('#id_user').children("option:selected").val(); }
+      if ($('#id_admin').prop('disabled') && $('#id_admin').is(":checked")) { data += '&admin=on'; }
+
+      $.post( "{% url 'print_shop_user' slug=slug %}", data, function( data ) {
           if( data.error) {
             errortext = '';
             $.each(data.error, function(key, value) {
@@ -214,7 +219,7 @@
           <div class="form-group row">
           {% bootstrap_label "Print Shop" label_class="col-md-3" %}
             <div class="col-md-9">
-            {% render_field form.printshop|append_attr:"disabled" class="form-control" %}
+            {% render_field form.group|append_attr:"disabled" class="form-control" %}
             </div>
           </div>
           {% bootstrap_field form.user layout='horizontal' %}
@@ -230,10 +235,10 @@
       <!-- Modal footer -->
       <div class="modal-footer">
         <div class="btn-group" role="group" aria-label="">
-          <button type="button" class="btn btn-warning" id="button-deactivate">Deactivate User</button>
           <button type="button" class="btn btn-primary" id="button-create">Create User</button>
           <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
         </div>
+        <button type="button" class="btn btn-warning" id="button-delete">Delete User</button>
       </div>
 
     </div>

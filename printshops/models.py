@@ -11,7 +11,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 User = get_user_model()
 
 from pricelists.models import PriceList
-
+from user.models import Group, GroupUser
 
 class PrintShop(models.Model):
     name = models.CharField(_('Shop Name'), max_length=128, unique=True)
@@ -50,10 +50,9 @@ class PrintShop(models.Model):
 
     """Check if user is staff for the shop"""
     def is_shop_staff(self, user):
-        if (user.is_authenticated and
-            PrintShopUser.objects.filter(printshop=self,
-                                         user=user,
-                                         active=True)):
+        if PrintShopUser.objects.filter(
+                        group=PrintShopGroup.objects.get(printshop=self),
+                        user=user, user__is_active=True):
             return True
 
         else:
@@ -61,11 +60,9 @@ class PrintShop(models.Model):
 
     """Check if user is admin for the shop"""
     def is_shop_admin(self, user):
-        if (user.is_authenticated and
-            PrintShopUser.objects.filter(printshop=self,
-                                         user=user,
-                                         admin=True,
-                                         active=True)):
+        if PrintShopUser.objects.filter(
+                        group=PrintShopGroup.objects.get(printshop=self),
+                        user=user, admin=True, user__is_active=True):
             return True
 
         else:
@@ -77,29 +74,29 @@ class PrintShop(models.Model):
         verbose_name_plural = "Print Shops"
 
 
+class PrintShopGroup(Group):
+    printshop = models.ForeignKey(PrintShop, on_delete=models.CASCADE)
+
+    def member_set(self):
+        return PrintShopUser.objects.filter(group=self).order_by('user')
+
+
 """Users of print shops:
 Admin can admistor shop details, users, prices and services and get all admin emails
 Users can download orders only
 """
-class PrintShopUser(models.Model):
-    printshop = models.ForeignKey(PrintShop, on_delete=models.CASCADE)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='staff')
-    active = models.BooleanField(_('Active'), default=True)
-    admin = models.BooleanField(_('Administrator'), default=False)
+class PrintShopUser(GroupUser):
     creator = models.BooleanField(_('Shop Creator'), default=False)
     order_notifications = models.BooleanField(_('Recieve Order Emails'), default=True)
     customer_notifications = models.BooleanField(_('Recieve Emails From Customers'), default=True)
     service_notifications = models.BooleanField(_('Recieve Service Emails'), default=True)
-    date_added = models.DateTimeField("Added", auto_now_add=True)
-    date_updated = models.DateTimeField(_('Last Updated'), auto_now=True)
 
     class Meta:
-        unique_together = ("printshop", "user")
-        verbose_name = "Print Shop User"
-        verbose_name_plural = "Print Shop Users"
+        verbose_name = "Print Shop Group User"
+        verbose_name_plural = "Print Shop Group Users"
 
     def __str__(self):
-        return '{} - {}'.format(self.printshop, self.user)
+        return '{} - {}'.format(self.group, self.user)
 
 
 
